@@ -226,6 +226,7 @@ Use Cases
   development, but needs ``image`` directives in other environments (testing,
   stage, prod, etc), merge can be used to rewrite ``build`` to ``image`` with
   the correct image tag.
+- If a
 
 
 Usage
@@ -246,6 +247,9 @@ Where ``docker-compose.yml`` is:
         build: .
         links: ['db']
         volumes: ['./logs:/app/logs']
+        environment:
+            - PORT=80
+            - DEBUG=1
     db:
         build: database/
 
@@ -256,6 +260,8 @@ and ``compose-overrides.yml``:
     web:
         image: example.com/web:latest
         volumes: []
+        environment:
+            - PORT=8080
     db:
         image: example.com/db:latest
 
@@ -267,5 +273,57 @@ would produce an ``export.yml``
         image: example.com/web:latest
         links: ['db']
         volumes: []
+        environment:
+            - PORT=8080
+    db:
+        image: example.com/db:latest
+
+
+By default ``dcao-merge`` will override environment variables with a list from
+``compose-overrides.yml`` (if available). If you are using [variable
+substitution](https://docs.docker.com/compose/compose-file/#variable-substitution)
+and need to merge variables, use ``--merge-vars`` argument:
+
+.. code:: sh
+
+    dcao-merge -o export.yml docker-compose.yml compose-overrides.yml --merge-vars
+
+Where ``docker-compose.yml`` is:
+
+.. code:: yaml
+
+    web:
+        build: .
+        links: ['db']
+        volumes: ['./logs:/app/logs']
+        environment:
+            - PORT=80
+            - DEBUG=${DEBUG}
+    db:
+        build: database/
+
+and ``compose-overrides.yml``:
+
+.. code:: yaml
+
+    web:
+        image: example.com/web:latest
+        volumes: []
+        environment:
+            - PORT=8080
+    db:
+        image: example.com/db:latest
+
+would produce an ``export.yml``
+
+.. code:: yaml
+
+    web:
+        image: example.com/web:latest
+        links: ['db']
+        volumes: []
+        environment:
+            - PORT=8080
+            - DEBUG=${DEBUG}
     db:
         image: example.com/db:latest
